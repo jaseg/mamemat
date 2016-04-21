@@ -64,12 +64,6 @@ ISR(USB_COM_vect) {
 
 void usb_init_device(void) {
     UHWCON |= (1<<UVREGE);
-    while (!(USBSTA&(1<<VBUS)));
-
-    USBCON |= (1<<USBE) | (1<<FRZCLK);
-
-    while (!(USBSTA&(1<<VBUS)))
-        ; /* wait for vbus to stabilize */
 
     /* start USB PLL */
     PLLCSR = (1<<PINDIV);
@@ -78,13 +72,19 @@ void usb_init_device(void) {
     while (!(PLLCSR & (1<<PLOCK)))
         ; /* wait for PLL to lock */
 
+    USBCON |= (1<<USBE);
+    USBCON |= (1<<OTGPADE);
     USBCON &= ~(1<<FRZCLK); /* enable clock */
+    UDCON |= (1<<DETACH);
+    UDCON &= ~(1<<LSM);
+
     UDIEN   = (1<<EORSTE);  /* EndOfReSeT interrupt */
 
     usb_init_endpoint(0, 0, 0, 0, 0); /* control out, 8 bytes, 1 bank */
     UEIENX |= (1<<RXSTPE);
 
-    UDCON &= ~((1<<DETACH) | (1<<LSM));
+    while (!(USBSTA&(1<<VBUS)));
+    UDCON &= ~(1<<DETACH);
 
     ep1_cnt = 0;
     ep2_cnt = 0;
