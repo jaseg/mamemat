@@ -64,8 +64,8 @@ int main(void) {
     PORTB |= 0x30; /* D8, 9 */
 
     /* DEBUG LED */
-    DDRC |= 0x80;
-    PORTC &= 0x7F;
+//    DDRC |= 0x80;
+//    PORTC &= 0x7F;
 
     usb_init_device();
     memset((void *)ep1_buf, 0, sizeof(ep1_buf));
@@ -81,14 +81,15 @@ int main(void) {
         pinstate.b = b; pinstate.c = c; pinstate.d = d; pinstate.e = e; pinstate.f = f;
 
         /* set modbyte. we use this for the action buttons, since all of them may be pressed at once. */
-        rep->mod = (!((PIND&0x02)<<7)) /* D2 buttons left*/
-                 | (!((PIND&0x01)<<6)) /* D3 */
-                 | (!((PIND&0x10)<<5)) /* D4 */
-                 | (!((PINC&0x40)<<4)) /* D5 I/II player buttons */
-                 | (!((PINE&0x40)<<3)) /* D7 buttons right */
-                 | (!((PINB&0x10)<<2)) /* D8 */
-                 | (!((PINB&0x20)<<1)) /* D9 */
-                 | (!((PIND&0x80)<<0));/* D6 I/II player buttons */
+        rep->mod = ((!(PIND&0x02))<<3) /* D2 buttons left*/
+                 | ((!(PIND&0x01))<<2) /* D3 */
+                 | ((!(PIND&0x10))<<1) /* D4 */
+                 | ((!(PINC&0x40))<<0) /* D5 I/II player buttons */
+                 | ((!(PINE&0x40))<<7) /* D7 buttons right */
+                 | ((!(PINB&0x10))<<6) /* D8 */
+                 | ((!(PINB&0x20))<<5) /* D9 */
+                 | ((!(PIND&0x80))<<4);/* D6 I/II player buttons */
+        rep->_pad = 0;
 
         /* handle joysticks.
          * it should be physically impossible to press more than two of one joystick's switches at once */
@@ -96,24 +97,26 @@ int main(void) {
 
         /* left joystick */
         if (! (PINF&0x10))
-            rep->keys[i++] = 0x04;
-        if (! (PINF&0x20))
             rep->keys[i++] = 0x05;
-        if (! (PINF&0x40))
+        if (! (PINF&0x20))
             rep->keys[i++] = 0x06;
+        if (! (PINF&0x40))
+            rep->keys[i++] = 0x04;
         if (! (PINF&0x80))
-            rep->keys[i++] = 0x07;
-
-        /* right joystick */
-        if (! PINB&0x40)
-            rep->keys[i++] = 0x08;
-        if (! PINB&0x80)
-            rep->keys[i++] = 0x09;
-        if (! PIND&0x40)
-            rep->keys[i++] = 0x0a;
-        if (! PINC&0x80)
             rep->keys[i++] = 0x0b;
 
+        /* right joystick */
+        if (! (PINB&0x40))
+            rep->keys[i++] = 0x08;
+        if (! (PINB&0x80))
+            rep->keys[i++] = 0x0a;
+        if (! (PIND&0x40))
+            rep->keys[i++] = 0x09;
+        if (! (PINC&0x80))
+            rep->keys[i++] = 0x07;
+
+        if (i>6)
+            i=6;
         //if (i>6) { /* at least one of the joysticks is broken, and we did an out-of-bounds write. */
             /* soft-reset the device */
         //    wdt_enable(WDTO_15MS);

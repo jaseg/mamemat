@@ -1,0 +1,3 @@
+[submodule "leds/memorymapping"]
+	path = leds/memorymapping
+	url = https://github.com/NimbusKit/memorymapping
